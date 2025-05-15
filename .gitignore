@@ -35,3 +35,4 @@ replay_pid*
 /target/
 /build/
 /.idea/
+/.vscode/
