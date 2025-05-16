@@ -1,146 +1,140 @@
 package br.com.coletaverde.coletaverde.infrastructure.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.config.Configuration;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 /**
- * Utility class for mapping objects and handling JSON transformations.
- * Designed for internal service and DTO conversions.
+ * Utility component for object mapping.
  */
 @Component
 public class ObjectMapperUtil {
 
-    private static final Logger LOGGER = Logger.getLogger(ObjectMapperUtil.class.getName());
-
-    private static final ModelMapper MODEL_MAPPER = new ModelMapper();
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ModelMapper MODEL_MAPPER;
 
     static {
+        MODEL_MAPPER = new ModelMapper();
+    }
+
+    /**
+     * Maps an input object to an instance of the specified class.
+     *
+     * @param object The object to be mapped to Class<T>.
+     * @param clazz The target class type.
+     * @param <Input> The input type.
+     * @param <Output> The output type.
+     * @return An instance of clazz with data from the object.
+     */
+    public <Input, Output> Output map(final Input object, final Class<Output> clazz) {
         MODEL_MAPPER.getConfiguration()
                 .setAmbiguityIgnored(true)
                 .setMatchingStrategy(MatchingStrategies.STRICT)
                 .setFieldMatchingEnabled(true)
-                .setFieldAccessLevel(org.modelmapper.config.Configuration.AccessLevel.PRIVATE);
+                .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE);
+
+        return MODEL_MAPPER.map(object, clazz);
     }
 
     /**
-     * Maps one object to another existing target instance using ModelMapper.
+     * Copies data from a source object to a target object.
      *
-     * @param source the source object
-     * @param target the target object to be populated
-     * @param <S>    the source type
-     * @param <T>    the target type
-     * @return the updated target object
+     * @param source The source object.
+     * @param target The target object.
+     * @param <Source> The source type.
+     * @param <Target> The target type.
+     * @return An instance of the target object with data from the source object.
      */
-    public <S, T> T map(final S source, final T target) {
-        if (source == null || target == null) {
-            LOGGER.warning("Mapping skipped due to null source or target.");
-            return target;
-        }
-
+    public <Source, Target> Target map(final Source source, Target target) {
         try {
-            MODEL_MAPPER.map(source, target);
+            for (Field sourceField : source.getClass().getDeclaredFields()) {
+                boolean fieldExists = Arrays.stream(target.getClass().getDeclaredFields())
+                        .anyMatch(f -> f.getName().equals(sourceField.getName()));
+
+                if (!fieldExists)
+                    continue;
+
+                Field targetField = target.getClass().getDeclaredField(sourceField.getName());
+                sourceField.setAccessible(true);
+                targetField.setAccessible(true);
+
+                if (isRecord(sourceField.getType())) {
+                    Object sourceAggregateObject = sourceField.get(source);
+                    Object targetAggregateObject = targetField.getType().getDeclaredConstructor().newInstance();
+                    targetField.set(target, map(sourceAggregateObject, targetAggregateObject));
+                    continue;
+                }
+
+                Object value = sourceField.get(source);
+                targetField.set(target, value);
+            }
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Failed to map source to target: " +
-                    source.getClass().getName() + " → " + target.getClass().getName(), ex);
+            ex.printStackTrace();
         }
 
         return target;
     }
 
     /**
-     * Maps a source object to a new instance of the target class.
+     * Checks if a class is a record.
      *
-     * @param source      the source object
-     * @param targetClass the class of the target type
-     * @param <S>         the source type
-     * @param <T>         the target type
-     * @return a new mapped instance of the target type, or null if source is null
+     * @param clazz The class to be checked.
+     * @return 'true' if the class is a record, 'false' otherwise.
      */
-    public <S, T> T map(final S source, final Class<T> targetClass) {
-        if (source == null || targetClass == null) {
-            LOGGER.warning("Mapping skipped due to null source or targetClass.");
-            return null;
-        }
-
-        try {
-            return MODEL_MAPPER.map(source, targetClass);
-        } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Failed to map source to target class: " +
-                    source.getClass().getName() + " → " + targetClass.getName(), ex);
-            return null;
-        }
+    private boolean isRecord(Class<?> clazz) {
+        return clazz.isRecord();
     }
 
     /**
-     * Maps a collection of source objects to a list of target objects.
+     * Converts an object of one type to another in a functional context.
      *
-     * @param sourceList  the list of source objects
-     * @param targetClass the class of the target type
-     * @param <D>         the target type
-     * @param <T>         the source type
-     * @return a list of mapped target objects; empty list if source is null/empty
+     * @param clazz The type to which the object will be converted.
+     * @param <Input> The input type.
+     * @param <Output> The output type.
+     * @return An instance of clazz with data from the input object.
      */
-    public <D, T> List<D> mapAll(final Collection<T> sourceList, final Class<D> targetClass) {
-        if (sourceList == null || sourceList.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        return sourceList.stream()
-                .map(source -> map(source, targetClass))
-                .collect(Collectors.toList());
+    public <Input, Output> Function<Input, Output> mapFn(final Class<Output> clazz) {
+        return object -> MODEL_MAPPER.map(object, clazz);
     }
 
     /**
-     * Serializes an object to a JSON string using Jackson.
+     * Converts a list of objects from one type to a list of Class<T> objects.
      *
-     * @param obj the object to serialize
-     * @return JSON string, or empty string if serialization fails
+     * @param objectList The list of objects to be converted.
+     * @param clazz The target class type.
+     * @param <Input> The input type.
+     * @param <Output> The output type.
+     * @return A list of objectList converted to the clazz type.
      */
-    public String objectToJson(final Object obj) {
-        if (obj == null) {
-            LOGGER.warning("Serialization skipped: object is null.");
-            return "";
-        }
+    public <Input, Output> List<Output> mapAll(final Collection<Input> objectList, Class<Output> clazz) {
+        MODEL_MAPPER.getConfiguration()
+                .setAmbiguityIgnored(true)
+                .setMatchingStrategy(MatchingStrategies.STRICT)
+                .setFieldMatchingEnabled(true)
+                .setFieldAccessLevel(Configuration.AccessLevel.PRIVATE);
 
-        try {
-            return OBJECT_MAPPER.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            LOGGER.log(Level.SEVERE, "Failed to serialize object to JSON: " + obj.getClass().getName(), e);
-            return "";
-        }
+        return objectList.stream()
+                .map(obj -> MODEL_MAPPER.map(obj, clazz))
+                .toList();
     }
 
     /**
-     * Deserializes a JSON string into an object of the specified class.
+     * Converts a list of objects from one type to a list of Class<T> objects in a functional context.
      *
-     * @param json        the JSON string
-     * @param targetClass the target class
-     * @param <T>         the type of the returned object
-     * @return an instance of the target class, or null if deserialization fails
+     * @param clazz The type to which the list will be converted.
+     * @param <Input> The input type.
+     * @param <Output> The output type.
+     * @return A list of Class<T>.
      */
-    public <T> T jsonToObject(final String json, final Class<T> targetClass) {
-        if (json == null || json.trim().isEmpty() || targetClass == null) {
-            LOGGER.warning("Deserialization skipped due to null/empty input or target class.");
-            return null;
-        }
-
-        try {
-            return OBJECT_MAPPER.readValue(json, targetClass);
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to deserialize JSON to object: " + targetClass.getName(), e);
-            return null;
-        }
+    public <Input, Output> Function<List<Input>, List<Output>> mapAllFn(final Class<Output> clazz) {
+        return objectList -> objectList.stream()
+                .map(object -> MODEL_MAPPER.map(object, clazz))
+                .toList();
     }
 }
