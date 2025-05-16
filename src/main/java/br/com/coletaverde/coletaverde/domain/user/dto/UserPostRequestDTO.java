@@ -17,5 +17,9 @@ public record UserPostRequestDTO (
     @JsonProperty(value = "password")
     @NotNull(message = "Password is mandatory.")
     @NotBlank(message = "Password cannot be blank.")
-    String password
+    String password,
+
+    @NotNull(message = "Username is mandatory.")
+    @NotBlank(message = "Username cannot be blank.")
+    String username
 ) {}
