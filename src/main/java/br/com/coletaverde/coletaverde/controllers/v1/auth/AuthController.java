@@ -1,6 +1,8 @@
 package br.com.coletaverde.coletaverde.controllers.v1.auth;
 
 import br.com.coletaverde.coletaverde.controllers.util.ResultErrorUtil;
+import br.com.coletaverde.coletaverde.domain.user.dto.UserLoginRequestDTO;
+import br.com.coletaverde.coletaverde.domain.user.dto.UserLoginResponseDTO;
 import br.com.coletaverde.coletaverde.domain.user.dto.UserPostRequestDTO;
 import br.com.coletaverde.coletaverde.domain.user.model.User;
 import br.com.coletaverde.coletaverde.domain.user.repository.UserRepository;
@@ -48,5 +50,25 @@ public class AuthController {
                 : ResponseEntity.status(HttpStatus.CREATED)
                         .body(userService.saveUser(objectMapperUtil.map(userDTO, new User())));
     }
+
+    /**
+     * Endpoint for user login.
+     *
+     * @param body the user login request body
+     * @return ResponseEntity with user login response or error
+     */
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody UserLoginRequestDTO body) {
+        User user = userRepository.findByEmail(body.email())
+                                  .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (passwordEncoder.matches(body.password(), user.getPassword())) {
+            String token = tokenService.generateToken(user);
+            return ResponseEntity.ok(new UserLoginResponseDTO(user.getUsername(), token));
+        }        
+
+        return ResponseEntity.badRequest().build();
+    }
+    
 }
 
