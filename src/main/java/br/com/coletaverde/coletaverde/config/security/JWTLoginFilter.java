@@ -9,17 +9,19 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
+import br.com.coletaverde.coletaverde.domain.user.model.User;
+import br.com.coletaverde.coletaverde.domain.user.repository.UserRepository;
 import br.com.coletaverde.coletaverde.infrastructure.service.TokenAuthenticationService;
-import br.com.coletaverde.coletaverde.infrastructure.service.SupabaseUserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Filter for handling JWT token-based login.
+ */
 @Component
 public class JWTLoginFilter extends OncePerRequestFilter {
 
@@ -27,40 +29,47 @@ public class JWTLoginFilter extends OncePerRequestFilter {
     private TokenAuthenticationService tokenAuthenticationService;
 
     @Autowired
-    private SupabaseUserService supabaseUserService;
+    private UserRepository userRepository;
 
-   
-@Override
-protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                @NonNull HttpServletResponse response,
-                                @NonNull FilterChain filterChain)
-        throws ServletException, IOException {
-
-    String token = extractToken(request);
-
-    if (token != null) {
-        String email = tokenAuthenticationService.validateToken(token);
-
-        if (email != null) {
-            var userJson = supabaseUserService.findUserByEmail(email);
-            if (userJson != null) {
-                List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                        new SimpleGrantedAuthority("ROLE_USER")
-                );
-
-                User user = new User(email, "", authorities);
-
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        user, null, authorities
-                );
+    /**
+     * Filters incoming requests to validate and set authentication based on JWT token.
+     *
+     * @param request the HTTP request
+     * @param response the HTTP response
+     * @param filterChain the filter chain
+     * @throws ServletException if an error occurs during servlet processing
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doFilterInternal(
+        @NonNull HttpServletRequest request, 
+        @NonNull HttpServletResponse response, 
+        @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+        String token = extractToken(request);
+    
+        if (token != null) {
+            String email = tokenAuthenticationService.validateToken(token);
+    
+            if (email != null) {
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new RuntimeException("User not found"));
+    
+                List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
+    
+        filterChain.doFilter(request, response);
     }
-
-    filterChain.doFilter(request, response);
-}
-
+    
+    /**
+     * Extracts JWT token from the request header.
+     *
+     * @param request the HTTP request
+     * @return the JWT token if present, otherwise null
+     */
     private String extractToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

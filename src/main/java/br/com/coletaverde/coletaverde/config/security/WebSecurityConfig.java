@@ -39,7 +39,7 @@ public class WebSecurityConfig implements WebMvcConfigurer {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.POST, "/api/v1/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
                 .requestMatchers("/supabase/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
