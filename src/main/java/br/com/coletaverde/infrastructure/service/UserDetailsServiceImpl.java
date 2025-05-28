@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import br.com.coletaverde.domain.user.model.User;
+import br.com.coletaverde.domain.user.entities.User;
 import br.com.coletaverde.domain.user.repository.UserRepository;
 
 /**

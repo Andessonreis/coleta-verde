@@ -15,7 +15,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 
-import br.com.coletaverde.domain.user.model.User; 
+import br.com.coletaverde.domain.user.entities.User;
 import br.com.coletaverde.domain.user.repository.UserRepository;
 import br.com.coletaverde.infrastructure.exceptions.BusinessException;
 import br.com.coletaverde.infrastructure.exceptions.BusinessExceptionMessage;

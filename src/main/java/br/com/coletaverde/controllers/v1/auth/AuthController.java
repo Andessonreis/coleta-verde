@@ -1,12 +1,13 @@
 package br.com.coletaverde.controllers.v1.auth;
 
 import br.com.coletaverde.controllers.util.ResultErrorUtil;
+import br.com.coletaverde.domain.citizen.entities.Citizen;
+import br.com.coletaverde.domain.citizen.service.ICitizenService;
 import br.com.coletaverde.domain.user.dto.UserLoginRequestDTO;
 import br.com.coletaverde.domain.user.dto.UserLoginResponseDTO;
-import br.com.coletaverde.domain.user.dto.UserPostRequestDTO;
-import br.com.coletaverde.domain.user.model.User;
+import br.com.coletaverde.domain.citizen.dto.CitizenPostRequestDTO;
+import br.com.coletaverde.domain.user.entities.User;
 import br.com.coletaverde.domain.user.repository.UserRepository;
-import br.com.coletaverde.domain.user.service.IUserService;
 import br.com.coletaverde.infrastructure.service.TokenService;
 import br.com.coletaverde.infrastructure.util.ObjectMapperUtil;
 import jakarta.validation.Valid;
@@ -27,11 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     @Autowired
-    private IUserService userService;
+    private ICitizenService citizenService;
 
     @Autowired
     private UserRepository userRepository;
-
 
     @Autowired
     private ObjectMapperUtil objectMapperUtil;
@@ -42,13 +42,13 @@ public class AuthController {
     @Autowired
     private TokenService tokenService;
 
-
     @PostMapping(path = "/register", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody UserPostRequestDTO userDTO, BindingResult result) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody CitizenPostRequestDTO citizenDTO, BindingResult result) {
+
         return result.hasErrors()
                 ? ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResultErrorUtil.getFieldErrors(result))
                 : ResponseEntity.status(HttpStatus.CREATED)
-                        .body(userService.saveUser(objectMapperUtil.map(userDTO, new User())));
+                        .body(citizenService.saveUser(objectMapperUtil.map(citizenDTO, Citizen.class)));
     }
 
     /**

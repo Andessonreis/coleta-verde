@@ -1,9 +1,9 @@
-package br.com.coletaverde.domain.user.model;
+package br.com.coletaverde.domain.user.entities;
 
+import br.com.coletaverde.domain.user.enums.Role;
+import br.com.coletaverde.domain.user.enums.UserStatus;
 import br.com.coletaverde.infrastructure.model.PersistenceEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.Serializable;
@@ -25,6 +26,7 @@ import java.util.List;
 @AllArgsConstructor
 @Entity(name = "user")
 @Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
 @EqualsAndHashCode(callSuper = false)
 public class User extends PersistenceEntity implements UserDetails, Serializable {
     private static final long serialVersionUID = 1L;
@@ -45,12 +47,19 @@ public class User extends PersistenceEntity implements UserDetails, Serializable
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role;
+
     /**
      * @return
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     /**
@@ -82,6 +91,6 @@ public class User extends PersistenceEntity implements UserDetails, Serializable
      */
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return this.status.equals(UserStatus.ACTIVE);
     }
 }
