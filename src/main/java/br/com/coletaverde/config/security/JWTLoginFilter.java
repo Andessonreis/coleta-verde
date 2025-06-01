@@ -26,7 +26,8 @@ import java.util.Optional;
 public class JWTLoginFilter extends OncePerRequestFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTLoginFilter.class);
-    private static final List<String> PUBLIC_ENDPOINTS = List.of("/api/register", "/api/login");
+    private static final List<String> PUBLIC_ENDPOINTS = List.of("/api/register", "/api/login",
+            "/api/employees", "/api/employees/**");
     private static final String AUTH_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 

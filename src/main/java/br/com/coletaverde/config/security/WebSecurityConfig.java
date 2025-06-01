@@ -40,6 +40,9 @@ public class WebSecurityConfig implements WebMvcConfigurer {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.POST, "/api/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/employees").permitAll() //Para teste
+                .requestMatchers(HttpMethod.GET, "/api/employees").permitAll() //Para teste
+                .requestMatchers(HttpMethod.GET, "/api/employees/**").permitAll() //Para teste
                 .requestMatchers("/supabase/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
