@@ -1,4 +1,4 @@
-package br.com.coletaverde.domain.employee.controller;
+package br.com.coletaverde.controllers.employee;
 
 import br.com.coletaverde.domain.employee.dto.EmployeeCreateDto;
 import br.com.coletaverde.domain.employee.dto.EmployeeResponseDto;
