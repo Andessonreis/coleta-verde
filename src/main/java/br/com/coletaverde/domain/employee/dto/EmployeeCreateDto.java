@@ -4,13 +4,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class EmployeeCreateDto {
@@ -32,10 +28,10 @@ public class EmployeeCreateDto {
 
     @NotNull(message = "Registration is mandatory.")
     @NotBlank(message = "Registration cannot be blank.")
-    private String registration;//matricula
+    private String registration; // matrícula
 
     @NotNull(message = "Job title is mandatory.")
     @NotBlank(message = "Job title cannot be blank.")
-    private String jobTitle;
-
+    private String jobTitle; // cargo
 }
+

@@ -16,4 +16,5 @@ public class EmployeeResponseDto {
     private String registration;
     private String jobTitle;
     private String role;
+    private String status;
 }

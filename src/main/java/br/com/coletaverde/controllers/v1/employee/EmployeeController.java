@@ -1,4 +1,4 @@
-package br.com.coletaverde.controllers.employee;
+package br.com.coletaverde.controllers.v1.employee;
 
 import br.com.coletaverde.domain.employee.dto.EmployeeCreateDto;
 import br.com.coletaverde.domain.employee.dto.EmployeeResponseDto;
@@ -22,7 +22,10 @@ public class EmployeeController {
 
     @PostMapping(path = "/employee", consumes = "application/json", produces = "application/json")
     public ResponseEntity<EmployeeResponseDto> save (@Valid @RequestBody EmployeeCreateDto obj) {
+        System.out.println("DTO EMPLOYEE: " + obj.toString());
+
         Employee employee = employeeService.save(EmployeeMapper.toEmployee(obj));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(EmployeeMapper.toDto(employee));
     }
 
