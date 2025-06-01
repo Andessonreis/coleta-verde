@@ -20,7 +20,7 @@ import java.util.UUID;
 public class EmployeeController {
     private final EmployeeService employeeService;
 
-    @PostMapping
+    @PostMapping(path = "/employee", consumes = "application/json", produces = "application/json")
     public ResponseEntity<EmployeeResponseDto> save (@Valid @RequestBody EmployeeCreateDto obj) {
         Employee employee = employeeService.save(EmployeeMapper.toEmployee(obj));
         return ResponseEntity.status(HttpStatus.CREATED).body(EmployeeMapper.toDto(employee));

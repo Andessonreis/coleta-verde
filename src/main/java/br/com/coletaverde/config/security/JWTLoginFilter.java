@@ -28,6 +28,7 @@ public class JWTLoginFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTLoginFilter.class);
     private static final List<String> PUBLIC_ENDPOINTS = List.of("/api/register", "/api/login",
             "/api/employees", "/api/employees/**");
+
     private static final String AUTH_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
@@ -82,7 +83,10 @@ public class JWTLoginFilter extends OncePerRequestFilter {
      * Checks whether the current request is to a public endpoint that doesn't require authentication.
      */
     private boolean isPublicEndpoint(String path) {
-        return PUBLIC_ENDPOINTS.contains(path);
+        return PUBLIC_ENDPOINTS.stream().anyMatch(publicPath ->
+                publicPath.endsWith("/**") ? path.startsWith(publicPath.replace("/**", ""))
+                        : path.equals(publicPath)
+        );
     }
 
     /**
