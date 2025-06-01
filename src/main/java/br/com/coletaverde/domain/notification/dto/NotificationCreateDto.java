@@ -1,7 +1,7 @@
 package br.com.coletaverde.domain.notification.dto;
 
 import br.com.coletaverde.domain.notification.entities.Notification;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,12 +11,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class NotificationCreateDto {
 
-    @NotBlank(message = "Message cannot be blank.")
+    @NotNull(message = "Message cannot be blank.")
     private String message;
 
-    @NotBlank(message = "Shipping method cannot be blank.")
+    @NotNull(message = "Shipping method cannot be blank.")
     private Notification.ShippingMethod shippingMethod;
 
-    @NotBlank(message = "Status cannot be blank.")
+    @NotNull(message = "Status cannot be blank.")
     private Notification.Status status;
 }
