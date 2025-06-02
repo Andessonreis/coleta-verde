@@ -15,11 +15,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "appointments")
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(callSuper = true)
 public class Appointment extends PersistenceEntity {
 
     @Column(name = "scheduled_at", nullable = false)
@@ -41,17 +41,24 @@ public class Appointment extends PersistenceEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AppointmentStatus status = AppointmentStatus.SCHEDULED;
+    private AppointmentStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "citizen_id")
+    @JoinColumn(name = "citizen_id", nullable = false)
     private Citizen requester;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "address_id")
+    @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "waste_id")
+    @JoinColumn(name = "waste_id", nullable = false)
     private Waste wasteItem;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = AppointmentStatus.SCHEDULED;
+        }
+    }
 }

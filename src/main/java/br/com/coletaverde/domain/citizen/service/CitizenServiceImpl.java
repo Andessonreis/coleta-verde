@@ -47,7 +47,7 @@ public class CitizenServiceImpl implements ICitizenService {
                 .map(c -> citizenRepository.save(c))
                 .map(saved -> objectMapperUtil.map(saved, CitizenSimpleResponseDTO.class))
                 .orElseThrow(() -> new BusinessException(
-                        BusinessExceptionMessage.ATTRIBUTE_VALUE_ALREADY_EXISTS.format("citizen")));
+                        BusinessExceptionMessage.ATTRIBUTE_VALUE_ALREADY_EXISTS.getMessage()));
 
     }
 }
