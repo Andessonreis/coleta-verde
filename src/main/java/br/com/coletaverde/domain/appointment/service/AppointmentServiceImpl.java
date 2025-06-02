@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 
 @RequiredArgsConstructor
@@ -59,6 +61,23 @@ public class AppointmentServiceImpl implements IAppointmentService {
         Appointment savedAppointment = appointmentRepository.save(appointment);
 
         return objectMapperUtil.map(savedAppointment, AppointmentResponseDTO.class);
+    }
+
+    @Override
+    public List<AppointmentResponseDTO> getAllAppointments() {
+        List<Appointment> appointments = appointmentRepository.findAll();
+
+        return appointments.stream()
+                .map(appointment -> objectMapperUtil.map(appointment, AppointmentResponseDTO.class))
+                .toList();
+    }
+
+    @Override
+    public AppointmentResponseDTO getAppointmentById(UUID id) {
+        Appointment appointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Agendamento não encontrado para o ID: " + id));
+
+        return objectMapperUtil.map(appointment, AppointmentResponseDTO.class);
     }
 
     /**

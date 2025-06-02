@@ -3,10 +3,13 @@ package br.com.coletaverde.controllers.v1.appointment;
 import br.com.coletaverde.controllers.util.ResultErrorUtil;
 import br.com.coletaverde.domain.appointment.dto.AppointmentPostRequestDTO;
 import br.com.coletaverde.domain.appointment.service.IAppointmentService;
+import br.com.coletaverde.infrastructure.exceptions.BusinessException;
 import br.com.coletaverde.infrastructure.security.AuthenticatedUserProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -65,6 +68,43 @@ public class AppointmentController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro interno inesperado. Tente novamente mais tarde.");
+        }
+    }
+
+    /**
+     * Retorna todos os agendamentos
+     */
+    @GetMapping(produces = "application/json")
+    public ResponseEntity<Object> getAllAppointments() {
+        log.info("Received getAllAppointments request");
+
+        try {
+            var appointments = appointmentService.getAllAppointments();
+            return ResponseEntity.ok(appointments);
+        } catch (Exception ex) {
+            log.error("Error while fetching all appointments", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao buscar os agendamentos.");
+        }
+    }
+
+    /**
+     * Retorna um agendamento pelo ID
+     */
+    @GetMapping(value = "/{id}", produces = "application/json")
+    public ResponseEntity<Object> getAppointmentById(@PathVariable UUID id) {
+        log.info("Received getAppointmentById request with id {}", id);
+
+        try {
+            var appointment = appointmentService.getAppointmentById(id);
+            return ResponseEntity.ok(appointment);
+        } catch (BusinessException ex) {
+            log.warn("Appointment not found: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+        } catch (Exception ex) {
+            log.error("Error while fetching appointment by id {}", id, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao buscar o agendamento.");
         }
     }
 }
