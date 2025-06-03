@@ -35,26 +35,27 @@ public class WebSecurityConfig implements WebMvcConfigurer {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers(HttpMethod.POST, "/api/login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/employees/employee").permitAll() //Para teste
-                .requestMatchers(HttpMethod.GET, "/api/employees").permitAll() //Para teste
-                .requestMatchers(HttpMethod.GET, "/api/employees/**").permitAll() //Para teste
-                .requestMatchers(HttpMethod.POST, "/api/notifications/notification").permitAll() //Para teste
-                .requestMatchers(HttpMethod.GET, "/api/notifications").permitAll() //Para teste
-                .requestMatchers(HttpMethod.GET, "/api/notifications/**").permitAll() //Para teste
-                .requestMatchers("/supabase/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
-            .addFilterBefore(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // OPTIONS (CORS)
+                        .requestMatchers(HttpMethod.POST, "/api/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/employees/employee").permitAll() // Para teste
+                        .requestMatchers(HttpMethod.GET, "/api/employees").permitAll() // Para teste
+                        .requestMatchers(HttpMethod.GET, "/api/employees/**").permitAll() // Para teste
+                        .requestMatchers(HttpMethod.POST, "/api/notifications/notification").permitAll() // Para teste
+                        .requestMatchers(HttpMethod.GET, "/api/notifications").permitAll() // Para teste
+                        .requestMatchers(HttpMethod.GET, "/api/notifications/**").permitAll() // Para teste
+                        .requestMatchers("/supabase/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
+                .addFilterBefore(jwtLoginFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
-    
 
     /**
      * Configures the password encoder used for encoding passwords.
