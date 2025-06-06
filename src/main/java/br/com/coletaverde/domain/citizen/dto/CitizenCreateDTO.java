@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CitizenPostRequestDTO {
+public class CitizenCreateDTO {
 
         @JsonProperty("email")
         @NotNull(message = "Email is mandatory.")

@@ -38,17 +38,35 @@ public class WebSecurityConfig implements WebMvcConfigurer {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // OPTIONS (CORS)
+
+                // TODO: Revisar as permissões abaixo. Estão liberadas temporariamente para desenvolvimento/testes.
+                //       Avaliar quais endpoints realmente devem ser públicos e aplicar regras de acesso corretas
+                //       com base em papéis (roles), autenticação e lógica de negócios.
+
+                        // CORS e endpoints públicos genéricos
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Pré-voo CORS
+
+                        // Autenticação
                         .requestMatchers(HttpMethod.POST, "/api/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/employees/employee").permitAll() // Para teste
-                        .requestMatchers(HttpMethod.GET, "/api/employees").permitAll() // Para teste
-                        .requestMatchers(HttpMethod.GET, "/api/employees/**").permitAll() // Para teste
-                        .requestMatchers(HttpMethod.POST, "/api/notifications/notification").permitAll() // Para teste
-                        .requestMatchers(HttpMethod.GET, "/api/notifications").permitAll() // Para teste
-                        .requestMatchers(HttpMethod.GET, "/api/notifications/**").permitAll() // Para teste
+
+                        // Funcionalidades de funcionários
+                        .requestMatchers(HttpMethod.POST, "/api/employees/employee").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/employees").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/employees/**").permitAll()
+
+                        // Notificações
+                        .requestMatchers(HttpMethod.POST, "/api/notifications/notification").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/notifications").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/notifications/**").permitAll()
+
+                        // Cidadãos
+/*                         .requestMatchers(HttpMethod.GET, "/api/citizens").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/citizens/**").permitAll() */
+
                         .requestMatchers("/supabase/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))

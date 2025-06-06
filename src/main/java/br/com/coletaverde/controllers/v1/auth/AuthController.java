@@ -5,7 +5,7 @@ import br.com.coletaverde.domain.citizen.entities.Citizen;
 import br.com.coletaverde.domain.citizen.service.ICitizenService;
 import br.com.coletaverde.domain.user.dto.UserLoginRequestDTO;
 import br.com.coletaverde.domain.user.dto.UserLoginResponseDTO;
-import br.com.coletaverde.domain.citizen.dto.CitizenPostRequestDTO;
+import br.com.coletaverde.domain.citizen.dto.CitizenCreateDTO;
 import br.com.coletaverde.domain.user.entities.User;
 import br.com.coletaverde.domain.user.repository.UserRepository;
 import br.com.coletaverde.infrastructure.service.TokenService;
@@ -43,7 +43,7 @@ public class AuthController {
     private TokenService tokenService;
 
     @PostMapping(path = "/register", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody CitizenPostRequestDTO citizenDTO, BindingResult result) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody CitizenCreateDTO citizenDTO, BindingResult result) {
 
         return result.hasErrors()
                 ? ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ResultErrorUtil.getFieldErrors(result))

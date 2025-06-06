@@ -1,5 +1,6 @@
 package br.com.coletaverde.domain.citizen.service;
 
+import br.com.coletaverde.domain.citizen.dto.CitizenResponseDTO;
 import br.com.coletaverde.domain.citizen.dto.CitizenSimpleResponseDTO;
 import br.com.coletaverde.domain.citizen.entities.Citizen;
 import br.com.coletaverde.domain.citizen.repository.CitizenRepository;
@@ -13,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -48,6 +49,27 @@ public class CitizenServiceImpl implements ICitizenService {
                 .map(saved -> objectMapperUtil.map(saved, CitizenSimpleResponseDTO.class))
                 .orElseThrow(() -> new BusinessException(
                         BusinessExceptionMessage.ATTRIBUTE_VALUE_ALREADY_EXISTS.getMessage()));
+    }
 
+    /**
+     * Retrieves all citizens.
+     *
+     * @return a list of all citizens as CitizenResponseDTO
+     */
+    @Override
+    public List<CitizenResponseDTO> getAllCitizen() {
+        List<Citizen> citizens = citizenRepository.findAll();
+
+        return citizens.stream()
+                .map(appointment -> objectMapperUtil.map(appointment, CitizenResponseDTO.class))
+                .toList();
+        }
+
+    @Override
+    public CitizenResponseDTO getCitizenById(UUID id) {
+        Citizen citizen = citizenRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Cidadão não encontrado para o ID: " + id));
+
+        return objectMapperUtil.map(citizen, CitizenResponseDTO.class);
     }
 }

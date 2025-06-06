@@ -33,7 +33,7 @@ public class User extends PersistenceEntity implements UserDetails, Serializable
 
     @NotNull
     @Size(min = 4, max = 100)
-    @Column(name = "username", nullable = false, unique = true)
+    @Column(name = "username", nullable = false)
     private String username;
 
     @NotNull
