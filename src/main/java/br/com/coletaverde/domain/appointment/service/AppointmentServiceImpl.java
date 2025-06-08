@@ -64,6 +64,31 @@ public class AppointmentServiceImpl implements IAppointmentService {
     }
 
     @Override
+    public AppointmentResponseDTO updateAppointment(UUID id, AppointmentPostRequestDTO dto, String userEmail) {
+        Appointment existingAppointment = appointmentRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("Agendamento não encontrado para o ID: " + id));
+
+        // Verifica se o usuário logado é o solicitante
+        if (!existingAppointment.getRequester().getEmail().equals(userEmail)) {
+            throw new BusinessException("Você não tem permissão para alterar este agendamento.");
+        }
+
+        validateAppointmentDate(dto.getScheduledAt());
+
+        Waste updatedWaste = wasteService.createWaste(dto.getWaste());
+
+        existingAppointment.setScheduledAt(dto.getScheduledAt());
+        existingAppointment.setOptionalPhotoUrl(dto.getOptionalPhotoUrl());
+        existingAppointment.setWasteItem(updatedWaste);
+
+        Appointment updatedAppointment = appointmentRepository.save(existingAppointment);
+
+        return objectMapperUtil.map(updatedAppointment, AppointmentResponseDTO.class);
+    }
+
+
+
+    @Override
     public List<AppointmentResponseDTO> getAllAppointments() {
         List<Appointment> appointments = appointmentRepository.findAll();
 

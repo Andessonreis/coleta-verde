@@ -2,8 +2,7 @@ package br.com.coletaverde.domain.appointment.dto;
 
 import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
 import br.com.coletaverde.domain.waste.dto.WasteResponseDTO;
-import br.com.coletaverde.domain.waste.entities.Waste;
-import br.com.coletaverde.domain.waste.enums.WasteType;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;

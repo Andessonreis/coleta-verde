@@ -8,6 +8,8 @@ import br.com.coletaverde.domain.appointment.dto.AppointmentResponseDTO;
 
 public interface IAppointmentService {
     AppointmentResponseDTO createAppointment(AppointmentPostRequestDTO dto, String userEmail);
+    AppointmentResponseDTO updateAppointment(UUID id, AppointmentPostRequestDTO dto, String userEmail);
+
 
     List<AppointmentResponseDTO> getAllAppointments();
     

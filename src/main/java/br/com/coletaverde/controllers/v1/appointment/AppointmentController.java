@@ -72,6 +72,54 @@ public class AppointmentController {
     }
 
     /**
+     * Atualiza um agendamento existente
+     */
+    @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<Object> updateAppointment(
+            @PathVariable UUID id,
+            @Valid @RequestBody AppointmentPostRequestDTO request,
+            BindingResult bindingResult) {
+
+        log.info("Received updateAppointment request for id {}", id);
+
+        if (bindingResult.hasErrors()) {
+            var errors = ResultErrorUtil.getFieldErrors(bindingResult);
+            log.warn("Validation failed: {}", errors);
+            return ResponseEntity
+                    .badRequest()
+                    .body(errors);
+        }
+
+        var optionalUser = authenticatedUserProvider.getAuthenticatedUser();
+
+        if (optionalUser.isEmpty()) {
+            log.warn("Unauthorized access attempt to updateAppointment");
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Usuário não autenticado");
+        }
+
+        var user = optionalUser.get();
+        log.info("Authenticated user: {}", user.getEmail());
+
+        try {
+            var updatedAppointment = appointmentService.updateAppointment(id, request, user.getEmail());
+            log.info("Appointment updated successfully for id {}", id);
+
+            return ResponseEntity.ok(updatedAppointment);
+
+        } catch (BusinessException ex) {
+            log.warn("Business error while updating appointment: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+
+        } catch (Exception ex) {
+            log.error("Unexpected error while updating appointment with id {}", id, ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao atualizar o agendamento.");
+        }
+    }
+
+    /**
      * Retorna todos os agendamentos
      */
     @GetMapping(produces = "application/json")
