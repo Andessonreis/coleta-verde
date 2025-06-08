@@ -18,6 +18,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AppointmentResponseDTO {
 
+    @JsonProperty("id")
+    private UUID id;
+
     @JsonProperty("scheduled_at")
     private LocalDateTime scheduledAt;
 
