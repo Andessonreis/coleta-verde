@@ -1,6 +1,9 @@
 package br.com.coletaverde.domain.appointment.dto;
 
 import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
+import br.com.coletaverde.domain.waste.dto.WasteResponseDTO;
+import br.com.coletaverde.domain.waste.entities.Waste;
+import br.com.coletaverde.domain.waste.enums.WasteType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
@@ -8,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -32,10 +36,7 @@ public class AppointmentResponseDTO {
     @JsonProperty("status")
     private AppointmentStatus status;
 
-    @JsonProperty("requester_id")
-    private Long requesterId;
-
-    @JsonProperty("requester_name")
-    private String requesterName;
+    @JsonProperty("wasteItem")
+    private WasteResponseDTO wasteItem;
 
 }
