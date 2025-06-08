@@ -81,6 +81,11 @@ public class AppointmentServiceImpl implements IAppointmentService {
         existingAppointment.setOptionalPhotoUrl(dto.getOptionalPhotoUrl());
         existingAppointment.setWasteItem(updatedWaste);
 
+        // Atualiza o status se fornecido
+        if (dto.getStatus() != null) {
+            existingAppointment.setStatus(dto.getStatus());
+        }
+
         Appointment updatedAppointment = appointmentRepository.save(existingAppointment);
 
         return objectMapperUtil.map(updatedAppointment, AppointmentResponseDTO.class);
