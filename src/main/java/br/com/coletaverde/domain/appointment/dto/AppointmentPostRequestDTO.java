@@ -1,5 +1,6 @@
 package br.com.coletaverde.domain.appointment.dto;
 
+import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
 import br.com.coletaverde.domain.waste.dto.WasteDTO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Future;
@@ -28,4 +29,7 @@ public class AppointmentPostRequestDTO {
     @JsonProperty("waste")
     @NotNull(message = "Waste information is required")
     private WasteDTO waste;
+
+    @JsonProperty("status")
+    private AppointmentStatus status;
 }
