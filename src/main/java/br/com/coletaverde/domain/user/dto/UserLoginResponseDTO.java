@@ -1,5 +1,6 @@
 package br.com.coletaverde.domain.user.dto;
 
+import br.com.coletaverde.domain.user.enums.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,4 +15,7 @@ public class UserLoginResponseDTO {
 
     @JsonProperty("token")
     private String token;
+    @JsonProperty("role")
+    private Role role;
+
 }
