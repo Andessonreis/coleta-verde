@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,4 +51,37 @@ public class CitizenController {
                     .body("Erro interno ao buscar o cidadão.");
         }
     }
+
+    @GetMapping(value = "/me", produces = "application/json")
+    public ResponseEntity<Object> getCurrentCitizen(Authentication authentication) {
+        try {
+            Object principal = authentication.getPrincipal();
+            String email;
+
+            if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+                email = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+
+            } else if (principal instanceof String) {
+            
+                email = (String) principal;
+            } else {
+    
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não autenticado corretamente.");
+            }
+
+            System.out.println("Email extraído: " + email);
+
+            var citizen = citizenService.getCitizenByEmail(email);
+            System.out.println("var: " + citizen);
+            if (citizen == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cidadão não encontrado.");
+            }
+            return ResponseEntity.ok(citizen);
+
+        } catch (Exception ex) {
+            log.error("Erro ao buscar cidadão autenticado", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno ao buscar o cidadão.");
+        }
+    }
+
 }

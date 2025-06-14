@@ -11,8 +11,8 @@ import lombok.*;
 @ToString
 public class CitizenResponseDTO {
 
-    @JsonProperty("username")
-    private String username;
+    @JsonProperty("name")
+    private String name;
 
     @JsonProperty("email")
     private String email;

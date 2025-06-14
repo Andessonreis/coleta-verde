@@ -62,6 +62,7 @@ public class AppointmentServiceImpl implements IAppointmentService {
 
         return objectMapperUtil.map(savedAppointment, AppointmentResponseDTO.class);
     }
+    
 
     @Override
     public AppointmentResponseDTO updateAppointment(UUID id, AppointmentPostRequestDTO dto, String userEmail) {

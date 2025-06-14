@@ -13,4 +13,6 @@ public interface ICitizenService {
     List<CitizenResponseDTO> getAllCitizen();
 
     CitizenResponseDTO getCitizenById(UUID id);
+    CitizenResponseDTO getCitizenByEmail(String email);
+
 }

@@ -72,4 +72,16 @@ public class CitizenServiceImpl implements ICitizenService {
 
         return objectMapperUtil.map(citizen, CitizenResponseDTO.class);
     }
+
+    @Override
+    public CitizenResponseDTO getCitizenByEmail(String email) {
+        Citizen citizen = citizenRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Cidadão não encontrado para o email: " + email));
+        System.out.println("getCitizeByEmailService: " + citizen);
+        System.out.println("Nome do cidadão: " + citizen.getName());
+
+
+        return objectMapperUtil.map(citizen, CitizenResponseDTO.class);
+    }
+
 }
