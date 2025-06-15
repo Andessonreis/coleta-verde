@@ -16,4 +16,6 @@ public interface IAppointmentService {
     AppointmentResponseDTO assignAppointment(UUID appointmentId, UUID employeeId);
     List<Appointment> getAppointmentsByEmployeeEmail(String email);
     AppointmentResponseDTO updateAppointmentStatus(UUID appointmentId, AppointmentStatus newStatus, String observacoes, String userEmail);
+    List<AppointmentResponseDTO> getAppointmentsByCitizenEmail(String email);
+
 }

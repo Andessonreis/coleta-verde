@@ -289,4 +289,38 @@ public class AppointmentController {
         }
     }
 
+    @GetMapping(value = "/citizen", produces = "application/json")
+    public ResponseEntity<Object> getAppointmentsByAuthenticatedCitizen() {
+        log.info("Iniciando requisição para buscar agendamentos do cidadão autenticado");
+
+        var optionalUser = authenticatedUserProvider.getAuthenticatedUser();
+
+        if (optionalUser.isEmpty()) {
+            log.warn("Tentativa de acesso não autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não autenticado");
+        }
+
+        var user = optionalUser.get();
+
+        if (!user.getRole().equals(Role.CITIZEN)) {
+            log.warn("Usuário sem permissão tentou acessar agendamentos de cidadão: {}", user.getEmail());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas cidadãos podem acessar esta rota");
+        }
+
+        try {
+            var appointments = appointmentService.getAppointmentsByCitizenEmail(user.getEmail());
+            log.info("Agendamentos do cidadão {} recuperados com sucesso", user.getEmail());
+            return ResponseEntity.ok(appointments);
+
+        } catch (BusinessException ex) {
+            log.warn("Erro de negócio: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+
+        } catch (Exception ex) {
+            log.error("Erro inesperado ao buscar agendamentos do cidadão", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao buscar os agendamentos do cidadão");
+        }
+    }
+
 }

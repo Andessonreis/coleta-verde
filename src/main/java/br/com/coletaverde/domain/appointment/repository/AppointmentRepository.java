@@ -32,4 +32,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             "LEFT JOIN FETCH a.address " +
             "WHERE e.id = :employeeId")
     List<Appointment> findAllByEmployeeIdWithDetails(@Param("employeeId") UUID employeeId);
+
+    @Query("SELECT a FROM Appointment a " +
+            "JOIN FETCH a.address " +
+            "JOIN FETCH a.wasteItem " +
+            "LEFT JOIN FETCH a.employee " +
+            "WHERE a.requester.id = :citizenId")
+    List<Appointment> findAllByCitizenIdWithDetails(@Param("citizenId") UUID citizenId);
+
 }

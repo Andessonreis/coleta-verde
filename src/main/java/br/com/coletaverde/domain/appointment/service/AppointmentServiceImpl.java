@@ -190,4 +190,17 @@ public class AppointmentServiceImpl implements IAppointmentService {
         return objectMapperUtil.map(updated, AppointmentResponseDTO.class);
     }
 
+
+    @Override
+    public List<AppointmentResponseDTO> getAppointmentsByCitizenEmail(String email) {
+        Citizen citizen = citizenRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Cidadão não encontrado com email: " + email));
+
+        List<Appointment> appointments = appointmentRepository.findAllByCitizenIdWithDetails(citizen.getId());
+
+        return appointments.stream()
+                .map(appointment -> objectMapperUtil.map(appointment, AppointmentResponseDTO.class))
+                .toList();
+    }
+
 }
