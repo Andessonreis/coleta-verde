@@ -1,8 +1,10 @@
 package br.com.coletaverde.controllers.v1.appointment;
 
 import br.com.coletaverde.controllers.util.ResultErrorUtil;
+import br.com.coletaverde.domain.appointment.dto.AppointmentAssignRequestDTO;
 import br.com.coletaverde.domain.appointment.dto.AppointmentPostRequestDTO;
 import br.com.coletaverde.domain.appointment.service.IAppointmentService;
+import br.com.coletaverde.domain.user.enums.Role;
 import br.com.coletaverde.infrastructure.exceptions.BusinessException;
 import br.com.coletaverde.infrastructure.security.AuthenticatedUserProvider;
 import jakarta.validation.Valid;
@@ -155,4 +157,54 @@ public class AppointmentController {
                     .body("Erro interno ao buscar o agendamento.");
         }
     }
+
+    @PutMapping(value = "/assign", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<Object> assignAppointmentToEmployee(
+            @Valid @RequestBody AppointmentAssignRequestDTO request,
+            BindingResult bindingResult
+    ) {
+        log.info("Iniciando requisição para atribuir agendamento a funcionário");
+
+        if (bindingResult.hasErrors()) {
+            var errors = ResultErrorUtil.getFieldErrors(bindingResult);
+            log.warn("Validação falhou: {}", errors);
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        var optionalUser = authenticatedUserProvider.getAuthenticatedUser();
+
+        if (optionalUser.isEmpty()) {
+            log.warn("Tentativa de acesso não autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não autenticado");
+        }
+
+        var user = optionalUser.get();
+        log.info("Usuário autenticado: {}", user.getEmail());
+
+        if (!user.getRole().equals(Role.ADMIN)) {
+            log.warn("Usuário sem permissão tentou atribuir agendamento: {}", user.getEmail());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Apenas administradores podem atribuir agendamentos");
+        }
+
+        try {
+            var assignedAppointment = appointmentService.assignAppointment(
+                    request.getAppointmentId(),
+                    request.getEmployeeId()
+            );
+
+            log.info("Agendamento atribuído com sucesso: {}", assignedAppointment.getId());
+            return ResponseEntity.ok(assignedAppointment);
+
+        } catch (BusinessException ex) {
+            log.warn("Erro de negócio ao atribuir agendamento: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+
+        } catch (Exception ex) {
+            log.error("Erro inesperado ao atribuir agendamento", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao atribuir o agendamento");
+        }
+    }
+
 }

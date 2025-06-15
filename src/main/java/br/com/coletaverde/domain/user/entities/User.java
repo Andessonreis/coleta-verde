@@ -48,6 +48,9 @@ public class User extends PersistenceEntity implements UserDetails, Serializable
     @Column(name = "email", nullable = false, unique = true)
     private String email;
 
+    @Column(name = "phone", length = 20)
+    private String phone;
+
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 

@@ -22,5 +22,11 @@ public enum AppointmentStatus {
     /**
      * The appointment was not completed (e.g., missed or rejected).
      */
-    NOT_COMPLETED
+    NOT_COMPLETED,
+
+
+    IN_PROGRESS,
+
+
+    PENDING
 }

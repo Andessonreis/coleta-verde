@@ -17,6 +17,5 @@ public class Citizen extends User {
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
-    @Column(name = "phone", nullable = false, length = 20)
-    private String phone;
+
 }

@@ -3,6 +3,7 @@ package br.com.coletaverde.domain.appointment.entities;
 import br.com.coletaverde.domain.address.entities.Address;
 import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
 import br.com.coletaverde.domain.citizen.entities.Citizen;
+import br.com.coletaverde.domain.employee.entities.Employee;
 import br.com.coletaverde.domain.waste.entities.Waste;
 import br.com.coletaverde.infrastructure.model.PersistenceEntity;
 import jakarta.persistence.*;
@@ -54,6 +55,10 @@ public class Appointment extends PersistenceEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "waste_id", nullable = false)
     private Waste wasteItem;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id")
+    private Employee employee;
 
     @PrePersist
     public void prePersist() {

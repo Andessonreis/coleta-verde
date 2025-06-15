@@ -1,6 +1,8 @@
 package br.com.coletaverde.domain.appointment.dto;
 
 import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
+import br.com.coletaverde.domain.citizen.dto.CitizenResponseDTO;
+import br.com.coletaverde.domain.employee.dto.EmployeeResponseDto;
 import br.com.coletaverde.domain.waste.dto.WasteResponseDTO;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -41,4 +43,9 @@ public class AppointmentResponseDTO {
     @JsonProperty("wasteItem")
     private WasteResponseDTO wasteItem;
 
+    @JsonProperty("requester")
+    private CitizenResponseDTO requester;
+
+    @JsonProperty("employee")
+    private EmployeeResponseDto employee;
 }

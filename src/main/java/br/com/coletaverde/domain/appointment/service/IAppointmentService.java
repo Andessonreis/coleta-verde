@@ -15,4 +15,6 @@ public interface IAppointmentService {
     
     AppointmentResponseDTO getAppointmentById(UUID id);
 
+    AppointmentResponseDTO assignAppointment(UUID appointmentId, UUID employeeId);
+
 }
