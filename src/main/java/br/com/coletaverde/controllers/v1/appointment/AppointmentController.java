@@ -3,6 +3,7 @@ package br.com.coletaverde.controllers.v1.appointment;
 import br.com.coletaverde.controllers.util.ResultErrorUtil;
 import br.com.coletaverde.domain.appointment.dto.AppointmentAssignRequestDTO;
 import br.com.coletaverde.domain.appointment.dto.AppointmentPostRequestDTO;
+import br.com.coletaverde.domain.appointment.dto.AppointmentStatusUpdateDTO;
 import br.com.coletaverde.domain.appointment.service.IAppointmentService;
 import br.com.coletaverde.domain.user.enums.Role;
 import br.com.coletaverde.infrastructure.exceptions.BusinessException;
@@ -204,6 +205,87 @@ public class AppointmentController {
             log.error("Erro inesperado ao atribuir agendamento", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro interno ao atribuir o agendamento");
+        }
+    }
+
+    /**
+     * Retorna os agendamentos associados ao funcionário autenticado
+     */
+    @GetMapping(value = "/employee", produces = "application/json")
+    public ResponseEntity<Object> getAppointmentsByAuthenticatedEmployee() {
+        log.info("Iniciando requisição para buscar agendamentos do funcionário autenticado");
+
+        var optionalUser = authenticatedUserProvider.getAuthenticatedUser();
+
+        if (optionalUser.isEmpty()) {
+            log.warn("Tentativa de acesso não autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não autenticado");
+        }
+
+        var user = optionalUser.get();
+
+        if (!user.getRole().equals(Role.EMPLOYEE)) {
+            log.warn("Usuário sem permissão tentou acessar agendamentos de funcionário: {}", user.getEmail());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas funcionários podem acessar esta rota");
+        }
+
+        try {
+            var appointments = appointmentService.getAppointmentsByEmployeeEmail(user.getEmail());
+            log.info("Agendamentos recuperados com sucesso para {}", user.getEmail());
+            return ResponseEntity.ok(appointments);
+
+        } catch (BusinessException ex) {
+            log.warn("Erro de negócio: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+
+        } catch (Exception ex) {
+            log.error("Erro inesperado ao buscar agendamentos", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao buscar os agendamentos do funcionário");
+        }
+    }
+
+    @PutMapping(value = "/{id}/status", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<Object> updateAppointmentStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody AppointmentStatusUpdateDTO request,
+            BindingResult bindingResult
+    ) {
+        log.info("Recebida solicitação para atualizar status do agendamento com id {}", id);
+
+        if (bindingResult.hasErrors()) {
+            var errors = ResultErrorUtil.getFieldErrors(bindingResult);
+            log.warn("Validação falhou: {}", errors);
+            return ResponseEntity.badRequest().body(errors);
+        }
+
+        var optionalUser = authenticatedUserProvider.getAuthenticatedUser();
+
+        if (optionalUser.isEmpty()) {
+            log.warn("Tentativa de acesso não autenticado");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuário não autenticado");
+        }
+
+        var user = optionalUser.get();
+
+        if (!user.getRole().equals(Role.EMPLOYEE)) {
+            log.warn("Usuário sem permissão tentou alterar status: {}", user.getEmail());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas funcionários podem alterar status de agendamentos");
+        }
+
+        try {
+            var updated = appointmentService.updateAppointmentStatus(id, request.getStatus(), request.getObservacoes(), user.getEmail());
+            log.info("Status do agendamento {} atualizado com sucesso para {}", id, request.getStatus());
+            return ResponseEntity.ok(updated);
+
+        } catch (BusinessException ex) {
+            log.warn("Erro de negócio: {}", ex.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+
+        } catch (Exception ex) {
+            log.error("Erro inesperado ao atualizar status do agendamento", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao atualizar o status do agendamento");
         }
     }
 

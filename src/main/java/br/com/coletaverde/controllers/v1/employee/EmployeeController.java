@@ -44,7 +44,6 @@ public class EmployeeController {
         return ResponseEntity.ok(EmployeeMapper.toListDto(employees));
     }
 
-
     @GetMapping(value = "/me", produces = "application/json")
     public ResponseEntity<Object> getCurrentEmployee(Authentication authentication) {
         try {

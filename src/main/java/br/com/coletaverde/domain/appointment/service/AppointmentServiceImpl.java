@@ -10,6 +10,7 @@ import br.com.coletaverde.domain.citizen.entities.Citizen;
 import br.com.coletaverde.domain.citizen.repository.CitizenRepository;
 import br.com.coletaverde.domain.employee.entities.Employee;
 import br.com.coletaverde.domain.employee.repository.EmployeeRepository;
+import br.com.coletaverde.domain.user.repository.UserRepository;
 import br.com.coletaverde.domain.waste.entities.Waste;
 import br.com.coletaverde.domain.waste.service.WasteServiceImpl;
 import br.com.coletaverde.infrastructure.exceptions.BusinessException;
@@ -34,6 +35,8 @@ public class AppointmentServiceImpl implements IAppointmentService {
 
     @Autowired
     private final CitizenRepository citizenRepository;
+
+    private final UserRepository userRepository;
 
     @Autowired
     private  ObjectMapperUtil objectMapperUtil;
@@ -97,9 +100,6 @@ public class AppointmentServiceImpl implements IAppointmentService {
         return objectMapperUtil.map(updatedAppointment, AppointmentResponseDTO.class);
     }
 
-
-
-
     @Override
     public List<AppointmentResponseDTO> getAllAppointments() {
         List<Appointment> appointments = appointmentRepository.findAllWithDetails();
@@ -145,6 +145,45 @@ public class AppointmentServiceImpl implements IAppointmentService {
 
         appointment.setEmployee(employee);
         appointment.setStatus(AppointmentStatus.SCHEDULED);
+
+        Appointment updated = appointmentRepository.save(appointment);
+
+        return objectMapperUtil.map(updated, AppointmentResponseDTO.class);
+    }
+
+    @Override
+    public List<Appointment> getAppointmentsByEmployeeEmail(String email) {
+        Employee employee = (Employee) userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException("Funcionário não encontrado com email: " + email));
+
+        return appointmentRepository.findAllByEmployeeIdWithDetails(employee.getId());
+    }
+
+
+    @Override
+    public AppointmentResponseDTO updateAppointmentStatus(UUID appointmentId, AppointmentStatus newStatus, String observacoes, String userEmail) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new BusinessException("Agendamento não encontrado para o ID: " + appointmentId));
+
+        // Verifica se o usuário é o funcionário responsável
+        if (appointment.getEmployee() == null || !appointment.getEmployee().getEmail().equals(userEmail)) {
+            throw new BusinessException("Você não tem permissão para alterar o status deste agendamento.");
+        }
+
+        // Valida a transição de status
+        if (appointment.getStatus() == AppointmentStatus.COMPLETED || appointment.getStatus() == AppointmentStatus.NOT_COMPLETED) {
+            throw new BusinessException("Este agendamento já foi finalizado.");
+        }
+
+        // Atualiza status
+        appointment.setStatus(newStatus);
+
+        // Define observações, se fornecidas ( motivo do problema)
+        if (observacoes != null && !observacoes.trim().isEmpty()) {
+            appointment.setOptionalPhotoUrl(observacoes);
+        }
+
+        appointment.setUpdatedAt(LocalDateTime.now());
 
         Appointment updated = appointmentRepository.save(appointment);
 
