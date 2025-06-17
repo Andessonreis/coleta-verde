@@ -1,0 +1,20 @@
+{
+  "name": "coleta-verde-back",
+  "version": "1.0.0",
+  "description": "Sistema de agendamento de coleta de resíduos urbanos desenvolvido para modernizar a gestão pública de resíduos e facilitar o descarte consciente por parte da população. Este repositório corresponde à **API Backend** do projeto, implementada com **Java** e **Spring Boot**.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andessonreis/coleta-verde.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Andessonreis/coleta-verde/issues"
+  },
+  "homepage": "https://github.com/Andessonreis/coleta-verde#readme"
+}
