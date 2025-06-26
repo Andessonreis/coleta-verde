@@ -74,6 +74,22 @@ public class AppointmentController {
         }
     }
 
+    @GetMapping(value = "/availability", produces = "application/json")
+    public ResponseEntity<Object> getAvailability() {
+        log.info("[GET] /api/appointments/availability - Buscando disponibilidade");
+
+        try {
+            var availabilityResponse = appointmentService.getAvailability();
+            log.info("Disponibilidade de agendamentos retornada com sucesso");
+            return ResponseEntity.ok(availabilityResponse);
+
+        } catch (Exception ex) {
+            log.error("Erro ao buscar disponibilidade de agendamentos", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao buscar a disponibilidade de agendamentos.");
+        }
+    }
+
     /**
      * Atualiza um agendamento existente
      */

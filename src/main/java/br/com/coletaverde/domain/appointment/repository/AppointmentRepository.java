@@ -1,10 +1,12 @@
 package br.com.coletaverde.domain.appointment.repository;
 
 import br.com.coletaverde.domain.appointment.entities.Appointment;
+import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -39,5 +41,22 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
             "LEFT JOIN FETCH a.employee " +
             "WHERE a.requester.id = :citizenId")
     List<Appointment> findAllByCitizenIdWithDetails(@Param("citizenId") UUID citizenId);
+
+
+    /**
+     * Conta os agendamentos ativos, agrupados por dia, dentro de um intervalo de tempo.
+     * Usa FUNCTION('DATE', ...) para extrair a data de um campo LocalDateTime.
+     * Filtra por status para não contar agendamentos cancelados.
+     */
+    @Query("SELECT FUNCTION('DATE', a.scheduledAt) as appointmentDate, COUNT(a.id) as total " +
+            "FROM Appointment a " +
+            "WHERE a.scheduledAt >= :startDateTime AND a.scheduledAt < :endDateTime " +
+            "AND a.status IN :activeStatuses " +
+            "GROUP BY FUNCTION('DATE', a.scheduledAt)")
+    List<AppointmentCountProjection> countActiveAppointmentsByDateRange(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("activeStatuses") List<AppointmentStatus> activeStatuses
+    );
 
 }

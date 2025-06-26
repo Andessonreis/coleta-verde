@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import br.com.coletaverde.domain.appointment.dto.AppointmentPostRequestDTO;
 import br.com.coletaverde.domain.appointment.dto.AppointmentResponseDTO;
+import br.com.coletaverde.domain.appointment.dto.AvailabilityResponse;
 import br.com.coletaverde.domain.appointment.entities.Appointment;
 import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
 
@@ -17,5 +18,5 @@ public interface IAppointmentService {
     List<Appointment> getAppointmentsByEmployeeEmail(String email);
     AppointmentResponseDTO updateAppointmentStatus(UUID appointmentId, AppointmentStatus newStatus, String observacoes, String userEmail);
     List<AppointmentResponseDTO> getAppointmentsByCitizenEmail(String email);
-
+    AvailabilityResponse getAvailability();
 }

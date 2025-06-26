@@ -3,8 +3,11 @@ package br.com.coletaverde.domain.appointment.service;
 import br.com.coletaverde.domain.address.entities.Address;
 import br.com.coletaverde.domain.appointment.dto.AppointmentPostRequestDTO;
 import br.com.coletaverde.domain.appointment.dto.AppointmentResponseDTO;
+import br.com.coletaverde.domain.appointment.dto.AvailabilityResponse;
+import br.com.coletaverde.domain.appointment.dto.DayAvailability;
 import br.com.coletaverde.domain.appointment.entities.Appointment;
 import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
+import br.com.coletaverde.domain.appointment.repository.AppointmentCountProjection;
 import br.com.coletaverde.domain.appointment.repository.AppointmentRepository;
 import br.com.coletaverde.domain.citizen.entities.Citizen;
 import br.com.coletaverde.domain.citizen.repository.CitizenRepository;
@@ -17,11 +20,18 @@ import br.com.coletaverde.infrastructure.exceptions.BusinessException;
 import br.com.coletaverde.infrastructure.util.ObjectMapperUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
@@ -42,6 +52,14 @@ public class AppointmentServiceImpl implements IAppointmentService {
     private  ObjectMapperUtil objectMapperUtil;
     @Autowired
     private  WasteServiceImpl wasteService;
+
+    @Value("${app.appointment.availability.days-to-check}")
+    private int daysToCheck;
+
+    @Value("${app.appointment.availability.max-per-day}")
+    private int defaultMaxAppointments;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @Override
     public AppointmentResponseDTO createAppointment(AppointmentPostRequestDTO dto, String userEmail) {
@@ -70,7 +88,66 @@ public class AppointmentServiceImpl implements IAppointmentService {
 
         return objectMapperUtil.map(savedAppointment, AppointmentResponseDTO.class);
     }
-    
+
+
+    @Override
+    public AvailabilityResponse getAvailability() {
+        LocalDate startDate = LocalDate.now().plusDays(1);
+        Map<LocalDate, Long> appointmentCounts = getAppointmentCounts(startDate);
+
+        List<LocalDate> businessDays = generateBusinessDays(startDate, daysToCheck);
+        List<DayAvailability> availableDates = buildAvailabilityList(businessDays, appointmentCounts);
+
+        return AvailabilityResponse.builder()
+                .availableDates(availableDates)
+                .defaultMaxAppointments(defaultMaxAppointments)
+                .build();
+    }
+
+    private List<LocalDate> generateBusinessDays(LocalDate startDate, int days) {
+        List<LocalDate> businessDays = new ArrayList<>();
+        for (int i = 0; businessDays.size() < days; i++) {
+            LocalDate date = startDate.plusDays(i);
+            if (!(date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY)) {
+                businessDays.add(date);
+            }
+        }
+        return businessDays;
+    }
+
+    private List<DayAvailability> buildAvailabilityList(List<LocalDate> dates, Map<LocalDate, Long> counts) {
+        return dates.stream().map(date -> {
+            long currentAppointments = counts.getOrDefault(date, 0L);
+            boolean isAvailable = currentAppointments < defaultMaxAppointments;
+
+            return DayAvailability.builder()
+                    .date(date.format(DATE_FORMATTER))
+                    .available(isAvailable)
+                    .currentAppointments(currentAppointments)
+                    .maxAppointments(defaultMaxAppointments)
+                    .reason(isAvailable ? null : "Limite diário atingido")
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    private Map<LocalDate, Long> getAppointmentCounts(LocalDate startDate) {
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = startDate.plusDays(daysToCheck).atStartOfDay();
+
+        List<AppointmentStatus> activeStatuses = List.of(
+                AppointmentStatus.SCHEDULED
+        );
+
+        List<AppointmentCountProjection> results = appointmentRepository.countActiveAppointmentsByDateRange(
+                startDateTime, endDateTime, activeStatuses
+        );
+
+        return results.stream()
+                .collect(Collectors.toMap(
+                        AppointmentCountProjection::getAppointmentDate,
+                        AppointmentCountProjection::getTotal
+                ));
+    }
 
     @Override
     public AppointmentResponseDTO updateAppointment(UUID id, AppointmentPostRequestDTO dto, String userEmail) {
