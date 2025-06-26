@@ -242,13 +242,24 @@ public class AppointmentServiceImpl implements IAppointmentService {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new BusinessException("Agendamento não encontrado para o ID: " + appointmentId));
 
-        // Verifica se o usuário é o funcionário responsável
-        if (appointment.getEmployee() == null || !appointment.getEmployee().getEmail().equals(userEmail)) {
+        boolean isEmployee = appointment.getEmployee() != null &&
+                appointment.getEmployee().getEmail().equals(userEmail);
+
+        boolean isCitizen = appointment.getRequester() != null &&
+                appointment.getRequester().getEmail().equals(userEmail);
+
+        if (!isEmployee && !isCitizen) {
             throw new BusinessException("Você não tem permissão para alterar o status deste agendamento.");
         }
 
-        // Valida a transição de status
-        if (appointment.getStatus() == AppointmentStatus.COMPLETED || appointment.getStatus() == AppointmentStatus.NOT_COMPLETED) {
+        // Cidadão só pode cancelar
+        if (isCitizen && newStatus != AppointmentStatus.CANCELED) {
+            throw new BusinessException("Cidadãos só podem cancelar agendamentos.");
+        }
+
+        // Impede reedição se já finalizado
+        if (appointment.getStatus() == AppointmentStatus.COMPLETED ||
+                appointment.getStatus() == AppointmentStatus.NOT_COMPLETED) {
             throw new BusinessException("Este agendamento já foi finalizado.");
         }
 

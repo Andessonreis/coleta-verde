@@ -4,6 +4,7 @@ import br.com.coletaverde.controllers.util.ResultErrorUtil;
 import br.com.coletaverde.domain.appointment.dto.AppointmentAssignRequestDTO;
 import br.com.coletaverde.domain.appointment.dto.AppointmentPostRequestDTO;
 import br.com.coletaverde.domain.appointment.dto.AppointmentStatusUpdateDTO;
+import br.com.coletaverde.domain.appointment.enums.AppointmentStatus;
 import br.com.coletaverde.domain.appointment.service.IAppointmentService;
 import br.com.coletaverde.domain.user.enums.Role;
 import br.com.coletaverde.infrastructure.exceptions.BusinessException;
@@ -284,9 +285,23 @@ public class AppointmentController {
 
         var user = optionalUser.get();
 
-        if (!user.getRole().equals(Role.EMPLOYEE)) {
+        boolean isCitizen = user.getRole().equals(Role.CITIZEN);
+        boolean isEmployee = user.getRole().equals(Role.EMPLOYEE);
+
+        if (isCitizen) {
+            if (!request.getStatus().equals(AppointmentStatus.CANCELED)) {
+                log.warn("Cidadão tentou definir status inválido: {}", request.getStatus());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Cidadãos só podem cancelar seus próprios agendamentos.");
+            }
+
+            var appointment = appointmentService.getAppointmentById(id);
+            if (!appointment.getRequester().getEmail().equals(user.getEmail())) {
+                log.warn("Cidadão tentou cancelar agendamento que não é seu.");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Você só pode cancelar seus próprios agendamentos.");
+            }
+        } else if (!isEmployee) {
             log.warn("Usuário sem permissão tentou alterar status: {}", user.getEmail());
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas funcionários podem alterar status de agendamentos");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas funcionários ou o próprio cidadão podem alterar o status.");
         }
 
         try {
