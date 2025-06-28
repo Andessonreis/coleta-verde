@@ -84,4 +84,17 @@ public class CitizenController {
         }
     }
 
+
+    @GetMapping(value = "/list", produces = "application/json")
+    public ResponseEntity<Object> getAllCitizens() {
+        try {
+            var citizens = citizenService.getAllCitizen();
+            return ResponseEntity.ok(citizens);
+        } catch (Exception ex) {
+            log.error("Error while fetching all citizens", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao buscar os cidadãos.");
+        }
+    }
+
 }
