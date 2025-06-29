@@ -24,16 +24,15 @@ public class CitizenController {
     @Autowired
     private ICitizenService citizenService;
 
-    @GetMapping(produces = "application/json")
-    public ResponseEntity<Object> getCitizen() {
-
+    @GetMapping(value = "/list", produces = "application/json")
+    public ResponseEntity<Object> getAllCitizens() {
         try {
             var citizens = citizenService.getAllCitizen();
             return ResponseEntity.ok(citizens);
         } catch (Exception ex) {
             log.error("Error while fetching all citizens", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro interno ao buscar os cidadões.");
+                    .body("Erro interno ao buscar os cidadãos.");
         }
     }
 
@@ -81,19 +80,6 @@ public class CitizenController {
         } catch (Exception ex) {
             log.error("Erro ao buscar cidadão autenticado", ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno ao buscar o cidadão.");
-        }
-    }
-
-
-    @GetMapping(value = "/list", produces = "application/json")
-    public ResponseEntity<Object> getAllCitizens() {
-        try {
-            var citizens = citizenService.getAllCitizen();
-            return ResponseEntity.ok(citizens);
-        } catch (Exception ex) {
-            log.error("Error while fetching all citizens", ex);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro interno ao buscar os cidadãos.");
         }
     }
 
