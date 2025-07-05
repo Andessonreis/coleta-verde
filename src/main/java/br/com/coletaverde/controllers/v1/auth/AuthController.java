@@ -3,10 +3,11 @@ package br.com.coletaverde.controllers.v1.auth;
 import br.com.coletaverde.controllers.util.ResultErrorUtil;
 import br.com.coletaverde.domain.citizen.entities.Citizen;
 import br.com.coletaverde.domain.citizen.service.ICitizenService;
+import br.com.coletaverde.domain.employee.entities.Employee;
 import br.com.coletaverde.domain.user.dto.UserLoginRequestDTO;
 import br.com.coletaverde.domain.user.dto.UserLoginResponseDTO;
 import br.com.coletaverde.domain.citizen.dto.CitizenCreateDTO;
-import br.com.coletaverde.domain.user.entities.User;
+import br.com.coletaverde.domain.user.enums.Role;
 import br.com.coletaverde.domain.user.repository.UserRepository;
 import br.com.coletaverde.infrastructure.service.TokenService;
 import br.com.coletaverde.infrastructure.util.ObjectMapperUtil;
@@ -57,18 +58,26 @@ public class AuthController {
      * @param body the user login request body
      * @return ResponseEntity with user login response or error
      */
-    @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody UserLoginRequestDTO body) {
-        User user = userRepository.findByEmail(body.email())
-                                  .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (passwordEncoder.matches(body.password(), user.getPassword())) {
-            String token = tokenService.generateToken(user);
-            return ResponseEntity.ok(new UserLoginResponseDTO(user.getEmail(), token, user.getRole()));
-        }        
+     @PostMapping("/login")
+     public ResponseEntity<?> loginUser(@RequestBody UserLoginRequestDTO body) {
+         return userRepository.findByEmail(body.email())
+                 .filter(user -> passwordEncoder.matches(body.password(), user.getPassword()))
+                 .map(user -> {
+                     String token = tokenService.generateToken(user);
 
-        return ResponseEntity.badRequest().build();
-    }
-    
+                     String cargo = null;
+                     if (user.getRole() == Role.EMPLOYEE && user instanceof Employee employee) {
+                         cargo = employee.getJobTitle();
+                     }
+
+                     return ResponseEntity.ok(new UserLoginResponseDTO(
+                             user.getEmail(), token, user.getRole(), cargo
+                     ));
+                 })
+                 .orElseGet(() -> ResponseEntity.badRequest().build());
+     }
+
+     
 }
 

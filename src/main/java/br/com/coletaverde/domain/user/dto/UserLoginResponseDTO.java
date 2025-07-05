@@ -18,4 +18,6 @@ public class UserLoginResponseDTO {
     @JsonProperty("role")
     private Role role;
 
+    @JsonProperty("jobTitle")
+    private String jobTitle;
 }

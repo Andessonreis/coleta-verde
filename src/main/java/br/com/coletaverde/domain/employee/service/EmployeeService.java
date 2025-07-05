@@ -29,8 +29,6 @@ public class EmployeeService {
 
     private final PasswordEncoder passwordEncoder;
 
-
-    
   @Transactional
     public Employee save(Employee obj) {
         obj.setPassword(passwordEncoder.encode(obj.getPassword()));

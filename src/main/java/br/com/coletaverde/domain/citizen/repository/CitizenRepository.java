@@ -13,4 +13,5 @@ import java.util.UUID;
 public interface CitizenRepository extends JpaRepository<Citizen, UUID> {
     @Query("SELECT c FROM citizen c JOIN FETCH c.address WHERE c.email = :email")
     Optional<Citizen> findByEmail(@Param("email") String email);
+
 }
