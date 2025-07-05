@@ -72,7 +72,7 @@ public class AuthController {
                      }
 
                      return ResponseEntity.ok(new UserLoginResponseDTO(
-                             user.getEmail(), token, user.getRole(), cargo
+                             user.getEmail(), token, user.getRole(), cargo, user.getStatus()
                      ));
                  })
                  .orElseGet(() -> ResponseEntity.badRequest().build());

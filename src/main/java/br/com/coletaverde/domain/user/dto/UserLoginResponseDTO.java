@@ -1,6 +1,8 @@
 package br.com.coletaverde.domain.user.dto;
 
 import br.com.coletaverde.domain.user.enums.Role;
+import br.com.coletaverde.domain.user.enums.UserStatus;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,4 +22,7 @@ public class UserLoginResponseDTO {
 
     @JsonProperty("jobTitle")
     private String jobTitle;
+
+    @JsonProperty("userStatus")
+    private UserStatus userStatus;
 }
