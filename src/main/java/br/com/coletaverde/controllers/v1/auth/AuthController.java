@@ -6,9 +6,11 @@ import br.com.coletaverde.domain.citizen.service.ICitizenService;
 import br.com.coletaverde.domain.employee.entities.Employee;
 import br.com.coletaverde.domain.user.dto.UserLoginRequestDTO;
 import br.com.coletaverde.domain.user.dto.UserLoginResponseDTO;
+import br.com.coletaverde.domain.auth.service.AuthenticationService;
 import br.com.coletaverde.domain.citizen.dto.CitizenCreateDTO;
 import br.com.coletaverde.domain.user.enums.Role;
 import br.com.coletaverde.domain.user.repository.UserRepository;
+import br.com.coletaverde.infrastructure.exceptions.UserSuspendedException;
 import br.com.coletaverde.infrastructure.service.TokenService;
 import br.com.coletaverde.infrastructure.util.ObjectMapperUtil;
 import jakarta.validation.Valid;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,11 +40,7 @@ public class AuthController {
     @Autowired
     private ObjectMapperUtil objectMapperUtil;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private TokenService tokenService;
+    private final AuthenticationService authenticationService;
 
     @PostMapping(path = "/register", consumes = "application/json", produces = "application/json")
     public ResponseEntity<?> registerUser(@Valid @RequestBody CitizenCreateDTO citizenDTO, BindingResult result) {
@@ -58,26 +57,18 @@ public class AuthController {
      * @param body the user login request body
      * @return ResponseEntity with user login response or error
      */
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody @Valid UserLoginRequestDTO body) {
+        try {
+            UserLoginResponseDTO response = authenticationService.login(body);
+            return ResponseEntity.ok(response);
 
-     @PostMapping("/login")
-     public ResponseEntity<?> loginUser(@RequestBody UserLoginRequestDTO body) {
-         return userRepository.findByEmail(body.email())
-                 .filter(user -> passwordEncoder.matches(body.password(), user.getPassword()))
-                 .map(user -> {
-                     String token = tokenService.generateToken(user);
+        } catch (UserSuspendedException ex) {
 
-                     String cargo = null;
-                     if (user.getRole() == Role.EMPLOYEE && user instanceof Employee employee) {
-                         cargo = employee.getJobTitle();
-                     }
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
 
-                     return ResponseEntity.ok(new UserLoginResponseDTO(
-                             user.getEmail(), token, user.getRole(), cargo, user.getStatus()
-                     ));
-                 })
-                 .orElseGet(() -> ResponseEntity.badRequest().build());
-     }
-
-     
+        } catch (BadCredentialsException ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+        }
+    }
 }
-

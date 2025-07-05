@@ -10,6 +10,7 @@ import br.com.coletaverde.domain.penalty.dto.mapper.PenaltyMapper;
 import br.com.coletaverde.domain.penalty.entities.Penalty;
 import br.com.coletaverde.domain.penalty.enums.PenaltyStatus;
 import br.com.coletaverde.domain.penalty.repository.PenaltyRepository;
+import br.com.coletaverde.domain.user.enums.UserStatus;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,81 +25,100 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PenaltyServiceImpl implements IPenaltyService {
 
-    private final PenaltyRepository penaltyRepository;
-    private final AppointmentRepository appointmentRepository;
-    private final CitizenRepository citizenRepository;
-    private final EmployeeRepository employeeRepository;
-    private final PenaltyMapper penaltyMapper;
+        private final PenaltyRepository penaltyRepository;
+        private final AppointmentRepository appointmentRepository;
+        private final CitizenRepository citizenRepository;
+        private final EmployeeRepository employeeRepository;
+        private final PenaltyMapper penaltyMapper;
 
-    @Override
-    @Transactional
-    public PenaltyResponseDTO createPenalty(PenaltyPostRequestDTO request, String createdByEmail) {
-        var appointment = appointmentRepository.findById(request.getAppointmentId())
-                .orElseThrow(() -> new EntityNotFoundException("Appointment not found: " + request.getAppointmentId()));
+        @Override
+        @Transactional
+        public PenaltyResponseDTO createPenalty(PenaltyPostRequestDTO request, String createdByEmail) {
+                var appointment = appointmentRepository.findById(request.getAppointmentId())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Appointment not found: " + request.getAppointmentId()));
 
-        var citizen = citizenRepository.findById(request.getCitizenId())
-                .orElseThrow(() -> new EntityNotFoundException("Citizen not found: " + request.getCitizenId()));
+                var citizen = citizenRepository.findById(request.getCitizenId())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Citizen not found: " + request.getCitizenId()));
 
-        var employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new EntityNotFoundException("Employee not found: " + request.getEmployeeId()));
+                var employee = employeeRepository.findById(request.getEmployeeId())
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Employee not found: " + request.getEmployeeId()));
 
-        Penalty penalty = Penalty.builder()
-                .appointment(appointment)
-                .citizen(citizen)
-                .employee(employee)
-                .type(request.getType())
-                .description(request.getDescription())
-                .evidencePhotoUrl(request.getEvidencePhotoUrl())
-                .blockDays(request.getBlockDays())
-                .status(PenaltyStatus.PENDING_ANALYSIS)
-                .reportedAt(LocalDateTime.now())
-                .build();
+                Penalty penalty = Penalty.builder()
+                                .appointment(appointment)
+                                .citizen(citizen)
+                                .employee(employee)
+                                .type(request.getType())
+                                .description(request.getDescription())
+                                .evidencePhotoUrl(request.getEvidencePhotoUrl())
+                                .blockDays(request.getBlockDays())
+                                .status(PenaltyStatus.PENDING_ANALYSIS)
+                                .reportedAt(LocalDateTime.now())
+                                .build();
 
-        var savedPenalty = penaltyRepository.save(penalty);
+                var savedPenalty = penaltyRepository.save(penalty);
 
-        return penaltyMapper.toResponseDTO(savedPenalty);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PenaltyResponseDTO> listarPenalidades() {
-        return penaltyRepository.findAll().stream()
-                .map(penaltyMapper::toResponseDTO)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public PenaltyResponseDTO analisarPenalidade(UUID penaltyId, PenaltyAnalysisDTO analysisDTO, String analystEmail) {
-        var penalty = penaltyRepository.findById(penaltyId)
-                .orElseThrow(() -> new EntityNotFoundException("Penalty not found: " + penaltyId));
-
-        if (penalty.getStatus() != PenaltyStatus.PENDING_ANALYSIS) {
-            throw new IllegalStateException("Penalty has already been analyzed. Status: " + penalty.getStatus());
+                return penaltyMapper.toResponseDTO(savedPenalty);
         }
 
-        var analyst = employeeRepository.findByEmail(analystEmail)
-                .orElseThrow(() -> new EntityNotFoundException("Analyst not found: " + analystEmail));
+        @Override
+        @Transactional(readOnly = true)
+        public List<PenaltyResponseDTO> listarPenalidades() {
+                List<Penalty> penalties = penaltyRepository.findAllWithDetails();
 
-        penalty.setAnalyst(analyst);
-        penalty.setAnalysisObservations(analysisDTO.getObservations());
-        penalty.setAnalysisDate(LocalDateTime.now());
-
-        if (analysisDTO.getApproved()) {
-            penalty.setStatus(PenaltyStatus.APPROVED);
-            LocalDateTime blockStartDate = LocalDateTime.now();
-            penalty.setBlockStartDate(blockStartDate);
-            penalty.setBlockEndDate(blockStartDate.plusDays(penalty.getBlockDays()));
-        } else {
-            penalty.setStatus(PenaltyStatus.REJECTED);
+                return penalties.stream()
+                                .map(penaltyMapper::toResponseDTO)
+                                .collect(Collectors.toList());
         }
 
-        // Força a escrita no DB para contornar o bug de estado do Hibernate
-        penaltyRepository.saveAndFlush(penalty);
+        @Override
+        @Transactional
+        public PenaltyResponseDTO analisarPenalidade(UUID penaltyId, PenaltyAnalysisDTO analysisDTO,
+                        String analystEmail) {
+                var penalty = penaltyRepository.findById(penaltyId)
+                                .orElseThrow(() -> new EntityNotFoundException("Penalty not found: " + penaltyId));
 
-        var updatedPenaltyFromDb = penaltyRepository.findById(penaltyId)
-                .orElseThrow(() -> new IllegalStateException("Could not re-fetch penalty after analysis: " + penaltyId));
+                if (penalty.getStatus() != PenaltyStatus.PENDING_ANALYSIS) {
+                        throw new IllegalStateException(
+                                        "Penalty has already been analyzed. Status: " + penalty.getStatus());
+                }
 
-        return penaltyMapper.toResponseDTO(updatedPenaltyFromDb);
-    }
+                var analyst = employeeRepository.findByEmail(analystEmail)
+                                .orElseThrow(() -> new EntityNotFoundException("Analyst not found: " + analystEmail));
+
+                penalty.setAnalyst(analyst);
+                penalty.setAnalysisObservations(analysisDTO.getObservations());
+                penalty.setAnalysisDate(LocalDateTime.now());
+
+                if (analysisDTO.getApproved()) {
+                        penalty.setStatus(PenaltyStatus.APPROVED);
+
+                        LocalDateTime blockStartDate = LocalDateTime.now();
+                        penalty.setBlockStartDate(blockStartDate);
+                        penalty.setBlockEndDate(blockStartDate.plusDays(penalty.getBlockDays()));
+
+                        // --- NOVA LÓGICA AQUI ---
+                        // 1. Pega o cidadão associado à penalidade
+                        var citizen = penalty.getCitizen();
+
+                        // 2. Altera o status do cidadão para SUSPENDED
+                        if (citizen != null) {
+                                citizen.setStatus(UserStatus.SUSPENDED);
+                        }
+                        // --- FIM DA NOVA LÓGICA ---
+
+                } else {
+                        penalty.setStatus(PenaltyStatus.REJECTED);
+                }
+
+                penaltyRepository.saveAndFlush(penalty);
+
+                var updatedPenaltyFromDb = penaltyRepository.findById(penaltyId)
+                                .orElseThrow(() -> new IllegalStateException(
+                                                "Could not re-fetch penalty after analysis: " + penaltyId));
+
+                return penaltyMapper.toResponseDTO(updatedPenaltyFromDb);
+        }
 }
